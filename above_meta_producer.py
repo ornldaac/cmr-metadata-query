@@ -1,4 +1,5 @@
 import json
+import math
 import os.path
 import requests
 
@@ -31,30 +32,20 @@ def download_from_cmr(what, **params):
         with open(filename, "r") as f:
             return json.loads(f.read())
 
-    # Issue query to the CMR search API
+    # Query first page of search results
+    headers = { "Accept": "application/json" }
     params["page_size"] = QUERY_PAGE_SIZE
-    for page_num in range(1, 1000000 // QUERY_PAGE_SIZE):
-        # Set page number parameter
-        if page_num != 1:
-            params["page_num"] = page_num
+    params["scroll"] = 'true'
+    response = requests.get("https://cmr.earthdata.nasa.gov/search/" + what, params=params, headers=headers)
+    num_entries = int(response.headers['CMR-Hits'])
+    headers["CMR-Scroll-Id"] = response.headers['CMR-Scroll-Id']
+    json_response = response.json()
 
-        # Query one page of search results
-        request = requests.get(
-            "https://cmr.earthdata.nasa.gov/search/" + what,
-            params=params,
-            headers={ "Accept": "application/json" }
-        )
-        json_response_page = request.json()
-        page_entries = json_response_page['feed']['entry']
-
-        if page_num == 1: # If this is the first page
-            json_response = json_response_page # Set json_response
-        else:  # If this isn't the first page
-            json_response['feed']['entry'] += page_entries # Append entries of this page to json_response
-        
-        # Stop requesting new pages as soon as no more entries are returned
-        if not page_entries:
-            break
+    # Query remaining pages
+    for _ in range(int(math.ceil(num_entries / QUERY_PAGE_SIZE) - 1)):
+        response = requests.get("https://cmr.earthdata.nasa.gov/search/" + what, params=params, headers=headers)
+        json_response_page = response.json()
+        json_response['feed']['entry'] += json_response_page['feed']['entry'] # Append entries of this page to json_response
 
     # Save results to JSON file
     with open(filename, "w") as f:
