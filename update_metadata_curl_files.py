@@ -1,3 +1,20 @@
+"""
+Utility for creating metadata curl scripts by querying https://cmr.earthdata.nasa.gov.
+
+This script does the following:
+1) Download a list of all ORNL DAAC collections from CMR.
+2) Download a list of all granules for each collection from CMR.
+3) Create a metadata.curl file in the output directory for each collection.
+   A metadata.curl file contains curl commands to download each granule of the collection.
+
+The raw output of each CMR query in steps 1 & 2 is stored in the temporary directory.
+This behaviour can be disabled with command line flags to check for changes on the CMR.
+
+Written 10/2018 by S. Klaassen
+"""
+
+
+from argparse import ArgumentParser, RawTextHelpFormatter
 import json
 import math
 import os.path
@@ -7,7 +24,7 @@ TEMP_DIR = "./tmp" # The directory, used to store all data retrieved from the CM
 OUTPUT_DIR = "./out" # The directory, used to store all generated metadata in cURL files
 QUERY_PAGE_SIZE = 2000 # The page size for CMR search results
 
-def download_from_cmr(what, **params):
+def download_from_cmr(what, ignore_cache=False, **params):
     """Issue a search query to CMR and return a dict of the JSON response
 
     For documentation on what can be searched for on the CMR, refer to
@@ -28,7 +45,7 @@ def download_from_cmr(what, **params):
     filename = os.path.join(TEMP_DIR, "{}_{}.json".format(what, '_'.join(params.values())))
 
     # Return previousely downloaded results from JSON file, if available
-    if os.path.exists(filename):
+    if not ignore_cache and os.path.exists(filename):
         with open(filename, "r") as f:
             return json.loads(f.read())
 
@@ -55,6 +72,12 @@ def download_from_cmr(what, **params):
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    argparser = ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
+    argparser.add_argument("--update-collections", dest="update_collections", help="ignore cached collections", action="store_true")
+    argparser.add_argument("--update-granules", dest="update_granules", help="ignore cached granules", action="store_true")
+    args = argparser.parse_args()
+
     # Make sure TEMP_DIR and OUTPUT_DIR exist
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
@@ -63,7 +86,7 @@ if __name__ == "__main__":
 
     # Download all collections of the ORNL-DAAC ABoVE project from CMR
     print("retrieving collections ...")
-    collections = download_from_cmr("collections", data_center="ORNL_DAAC", project="ABoVE")['feed']['entry']
+    collections = download_from_cmr("collections", ignore_cache=args.update_collections, data_center="ORNL_DAAC", project="ABoVE")['feed']['entry']
     print("got {} collections".format(len(collections)))
 
     for collection in collections:
@@ -75,7 +98,7 @@ if __name__ == "__main__":
 
         # Download all granules associated with this concept ID from CMR
         print("retrieving granules for dataset '{}' ...".format(dataset_name))
-        granules = download_from_cmr("granules", concept_id=concept_id)['feed']['entry']
+        granules = download_from_cmr("granules", ignore_cache=args.update_granules, concept_id=concept_id)['feed']['entry']
         print("got {} granules".format(len(granules)))
 
         # Create metadata directory for this dataset
