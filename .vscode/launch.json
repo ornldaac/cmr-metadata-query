@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "python above_meta_producer.py",
+            "name": "python update_metadata_curl_files.py",
             "type": "python",
             "request": "launch",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/above_meta_producer.py"
+            "program": "${workspaceFolder}/update_metadata_curl_files.py"
         }
     ]
 }
