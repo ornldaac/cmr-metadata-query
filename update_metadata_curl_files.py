@@ -211,7 +211,7 @@ def main(data_center, project, update_collections, update_granules, events=Event
                 granules = download_from_cmr("granules", temp_dir, concept_id=concept_id)['feed']['entry']
         except Exception as err:
             events.granules_download_failed(collection, dataset_name, err)
-            raise
+            continue
         else:
             events.granules_download_succeeded(collection, dataset_name, granules)
 
@@ -245,7 +245,7 @@ def main(data_center, project, update_collections, update_granules, events=Event
                     )
         except Exception as err:
             events.writing_curl_file_failed(collection, dataset_name, granules, err)
-            raise
+            continue
         else:
             events.writing_curl_file_succeeded(collection, dataset_name, granules, filename)
 
