@@ -2,7 +2,7 @@
 Utility for creating metadata curl scripts by querying https://cmr.earthdata.nasa.gov.
 
 This script does the following:
-1) Download a list of all ORNL DAAC collections from CMR.
+1) Download a list of all collections associated with the given data center and project from CMR.
 2) Download a list of all granules for each collection from CMR.
 3) Create a metadata.curl file in the output directory for each collection.
    A metadata.curl file contains curl commands to download each granule of the collection.
@@ -163,26 +163,26 @@ class PrintEvents(Events):
     def writing_curl_file_failed(self, collection, dataset_name, granules, err):
         print("raised", repr(err))
 
-def main(update_collections, update_granules, events=Events(), temp_dir=TEMP_DIR, output_dir=OUTPUT_DIR):
+def main(data_center, project, update_collections, update_granules, events=Events(), temp_dir=TEMP_DIR, output_dir=OUTPUT_DIR):
     # Make sure temp_dir and output_dir exist
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # Download all collections of the ORNL-DAAC ABoVE project from CMR
+    # Download all collections associated with `data_center` and `project` from CMR
     try:
-        if not update_collections and is_cached("collections", temp_dir, data_center="ORNL_DAAC", project="ABoVE"):
+        if not update_collections and is_cached("collections", temp_dir, data_center=data_center, project=project):
             try:
                 events.collections_download_cached()
-                collections = retrieve_cached("collections", temp_dir, data_center="ORNL_DAAC", project="ABoVE")['feed']['entry']
+                collections = retrieve_cached("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
             except Exception as err: # If retrieving the cached collections failed, ...
                 events.collections_download_cached_failed(err)
                 events.collections_download_starting()
-                collections = download_from_cmr("collections", temp_dir, data_center="ORNL_DAAC", project="ABoVE")['feed']['entry']
+                collections = download_from_cmr("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
         else: # If using cached collections is disabled, ...
             events.collections_download_starting()
-            collections = download_from_cmr("collections", temp_dir, data_center="ORNL_DAAC", project="ABoVE")['feed']['entry']
+            collections = download_from_cmr("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
     except Exception as err:
         events.collections_download_failed(err)
         raise
@@ -252,8 +252,18 @@ def main(update_collections, update_granules, events=Events(), temp_dir=TEMP_DIR
 if __name__ == "__main__":
     # Parse command line arguments
     argparser = ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
+    argparser.add_argument(dest="data_center", help="data center to query for")
+    argparser.add_argument(dest="project", help="project to query for")
     argparser.add_argument("--update-collections", dest="update_collections", help="ignore cached collections", action="store_true")
     argparser.add_argument("--update-granules", dest="update_granules", help="ignore cached granules", action="store_true")
+    argparser.add_argument("--temp-dir", "-t", dest="temp_dir", default=TEMP_DIR, help="overwrite directory for CMR queries")
+    argparser.add_argument("--output-dir", "-o", dest="output_dir", default=OUTPUT_DIR, help="overwrite directory for CMR queries")
     args = argparser.parse_args()
 
-    main(args.update_collections, args.update_granules, PrintEvents())
+    print("")
+    print("Creating metadata curl scripts with the following parameters:")
+    for parameter, value in args.__dict__.items():
+        print("  {}={}".format(parameter, value))
+    print("")
+
+    main(args.data_center, args.project, args.update_collections, args.update_granules, PrintEvents(), args.temp_dir, args.output_dir)

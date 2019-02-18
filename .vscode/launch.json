@@ -9,7 +9,11 @@
             "type": "python",
             "request": "launch",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/update_metadata_curl_files.py"
+            "program": "${workspaceFolder}/update_metadata_curl_files.py",
+            "args": [
+                "ORNL_DAAC",
+                "ABoVE",
+            ]
         }
     ]
 }
