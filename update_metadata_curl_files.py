@@ -38,7 +38,7 @@ def is_cached(what, temp_dir, **params):
         boolean: True, if cached results were found
     """
 
-    filename = os.path.join(temp_dir, "{}_{}.json".format(what, '_'.join(params.values())))
+    filename = os.path.join(temp_dir, '_'.join([what] + list(params.values())) + ".json")
 
     return os.path.exists(filename)
 
@@ -56,7 +56,7 @@ def retrieve_cached(what, temp_dir, **params):
         dict: JSON response content
     """
 
-    filename = os.path.join(temp_dir, "{}_{}.json".format(what, '_'.join(params.values())))
+    filename = os.path.join(temp_dir, '_'.join([what] + list(params.values())) + ".json")
 
     with open(filename, "r") as f:
         return json.loads(f.read())
@@ -80,7 +80,7 @@ def download_from_cmr(what, temp_dir, **params):
         dict: JSON response content
     """
 
-    filename = os.path.join(temp_dir, "{}_{}.json".format(what, '_'.join(params.values())))
+    filename = os.path.join(temp_dir, '_'.join([what] + list(params.values())) + ".json")
 
     # Query first page of search results
     headers = { "Accept": "application/json" }
@@ -170,19 +170,24 @@ def main(data_center, project, update_collections, update_granules, events=Event
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # Download all collections associated with `data_center` and `project` from CMR
+    # Set query parameters for retrieving collections from CMR
+    queryparams = {}
+    if project and project != "all": queryparams["project"] = project
+    if data_center and data_center != "all": queryparams["data_center"] = data_center
+
+    # Download all that match queryparams from CMR
     try:
-        if not update_collections and is_cached("collections", temp_dir, data_center=data_center, project=project):
+        if not update_collections and is_cached("collections", temp_dir, **queryparams):
             try:
                 events.collections_download_cached()
-                collections = retrieve_cached("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
+                collections = retrieve_cached("collections", temp_dir, **queryparams)['feed']['entry']
             except Exception as err: # If retrieving the cached collections failed, ...
                 events.collections_download_cached_failed(err)
                 events.collections_download_starting()
-                collections = download_from_cmr("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
+                collections = download_from_cmr("collections", temp_dir, **queryparams)['feed']['entry']
         else: # If using cached collections is disabled, ...
             events.collections_download_starting()
-            collections = download_from_cmr("collections", temp_dir, data_center=data_center, project=project)['feed']['entry']
+            collections = download_from_cmr("collections", temp_dir, **queryparams)['feed']['entry']
     except Exception as err:
         events.collections_download_failed(err)
         raise
@@ -252,12 +257,12 @@ def main(data_center, project, update_collections, update_granules, events=Event
 if __name__ == "__main__":
     # Parse command line arguments
     argparser = ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
-    argparser.add_argument(dest="data_center", help="data center to query for")
-    argparser.add_argument(dest="project", help="project to query for")
+    argparser.add_argument(dest="data_center", help="data center to query for or \"all\"")
+    argparser.add_argument(dest="project", help="project to query for or \"all\"")
     argparser.add_argument("--update-collections", dest="update_collections", help="ignore cached collections", action="store_true")
     argparser.add_argument("--update-granules", dest="update_granules", help="ignore cached granules", action="store_true")
-    argparser.add_argument("--temp-dir", "-t", dest="temp_dir", default=TEMP_DIR, help="overwrite directory for CMR queries")
-    argparser.add_argument("--output-dir", "-o", dest="output_dir", default=OUTPUT_DIR, help="overwrite directory for CMR queries")
+    argparser.add_argument("--temp-dir", "-t", dest="temp_dir", default=TEMP_DIR, help="directory for cached CMR queries")
+    argparser.add_argument("--output-dir", "-o", dest="output_dir", default=OUTPUT_DIR, help="directory for created CURL files")
     args = argparser.parse_args()
 
     print("")
