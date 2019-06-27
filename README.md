@@ -34,7 +34,7 @@ python update_metadata_curl_files.py [OPTIONS] data_center project
 
 For a list of valid options run `update_metadata_curl_files.py` with the `-h` option:
 ```
-python update_metadata_curl_files.py [OPTIONS] -h
+python update_metadata_curl_files.py -h
 ```
 
 ### COMMAND LINE USAGE EXAMPLES
@@ -70,6 +70,7 @@ python update_metadata_curl_files.py ORNL_DAAC all --update-collections --update
 * `events (Events, optional)` A user provided class for customized logging. Defaults to `PrintEvents()`.
 * `temp_dir (str, optional)` Directory for storing cached CMR queries in JSON format. Defaults to "./tmp".
 * `output_dir (str, optional)` Directory for storing generated metadata CURL files. Defaults to "./out".
+* `concept_format (str, optional)` Response format for granule downloads. This affects the `Accept` header and output file extension of the generated curl commands. Defaults to "json".
 
 ### PYTHON MODULE USAGE EXAMPLES
 
