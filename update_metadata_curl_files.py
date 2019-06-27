@@ -20,9 +20,27 @@ import math
 import os.path
 import requests
 
+class QueryResultFormat(object):
+    def __init__(self, accept_header, file_ext):
+        self.accept_header = accept_header
+        self.file_ext = file_ext
+
 TEMP_DIR = "./tmp" # The directory, used to store all data retrieved from the CMR search API in JSON files
 OUTPUT_DIR = "./out" # The directory, used to store all generated metadata in cURL files
 QUERY_PAGE_SIZE = 2000 # The page size for CMR search results
+SUPPORTED_CONCEPT_FORMATS = {
+    "json": QueryResultFormat("application/json", "json"),
+    "xml": QueryResultFormat("application/xml", "xml"),
+    "echo10": QueryResultFormat("application/echo10+xml", "xml"),
+    "iso": QueryResultFormat("application/iso19115+xml", "xml"),
+    "iso19115": QueryResultFormat("application/iso19115+xml", "xml"),
+    "atom": QueryResultFormat("application/atom+xml", "xml"),
+    "native": QueryResultFormat("application/metadata+xml", "xml"),
+    "umm_json": QueryResultFormat("application/vnd.nasa.cmr.umm+json", "json"),
+    "dif": QueryResultFormat("application/dif+xml", "xml"),
+    "dif10": QueryResultFormat("application/dif10+xml", "xml"),
+}
+DEFAULT_CONCEPT_FORMAT = "json"
 
 def is_cached(what, temp_dir, **params):
     """Check if query results are cached in the `temp_dir` directory.
@@ -163,7 +181,13 @@ class PrintEvents(Events):
     def writing_curl_file_failed(self, collection, dataset_name, granules, err):
         print("raised", repr(err))
 
-def main(data_center, project, update_collections, update_granules, events=Events(), temp_dir=TEMP_DIR, output_dir=OUTPUT_DIR):
+def main(data_center, project, update_collections, update_granules, events=Events(), temp_dir=TEMP_DIR, output_dir=OUTPUT_DIR, concept_format=DEFAULT_CONCEPT_FORMAT):
+    # Validate arguments
+    try:
+        concept_format = SUPPORTED_CONCEPT_FORMATS[concept_format]
+    except KeyError:
+        raise ValueError("Unsupported response format for CMR concept queries: {}".format(concept_format))
+    
     # Make sure temp_dir and output_dir exist
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
@@ -232,8 +256,8 @@ def main(data_center, project, update_collections, update_granules, events=Event
             with open(filename, "w") as f:
                 # Write cURL command to retrieve dataset metadata
                 f.write(
-                    "curl -s -o {}.json -H 'Accept: application/json' \"https://cmr.earthdata.nasa.gov/search/concepts/{}\"\n"
-                    .format(dataset_name, concept_id)
+                    "curl -s -o {}.{} -H 'Accept: {}' \"https://cmr.earthdata.nasa.gov/search/concepts/{}\"\n"
+                    .format(dataset_name, concept_format.file_ext, concept_format.accept_header, concept_id)
                 )
 
                 for granule in granules:
@@ -245,8 +269,8 @@ def main(data_center, project, update_collections, update_granules, events=Event
 
                     # Write cURL command to retrieve granule metadata
                     f.write(
-                        "curl -s -o {}.json -H 'Accept: application/json' \"https://cmr.earthdata.nasa.gov/search/concepts/{}\"\n"
-                        .format(granule_name, granule_id)
+                        "curl -s -o {}.{} -H 'Accept: {}' \"https://cmr.earthdata.nasa.gov/search/concepts/{}\"\n"
+                        .format(granule_name, concept_format.file_ext, concept_format.accept_header, granule_id)
                     )
         except Exception as err:
             events.writing_curl_file_failed(collection, dataset_name, granules, err)
@@ -263,6 +287,13 @@ if __name__ == "__main__":
     argparser.add_argument("--update-granules", dest="update_granules", help="ignore cached granules", action="store_true")
     argparser.add_argument("--temp-dir", "-t", dest="temp_dir", default=TEMP_DIR, help="directory for cached CMR queries")
     argparser.add_argument("--output-dir", "-o", dest="output_dir", default=OUTPUT_DIR, help="directory for created CURL files")
+    argparser.add_argument(
+        "--concept-format",
+        dest="concept_format",
+        choices=SUPPORTED_CONCEPT_FORMATS.keys(),
+        default=DEFAULT_CONCEPT_FORMAT,
+        help="response format for granule downloads"
+    )
     args = argparser.parse_args()
 
     print("")
@@ -271,4 +302,4 @@ if __name__ == "__main__":
         print("  {}={}".format(parameter, value))
     print("")
 
-    main(args.data_center, args.project, args.update_collections, args.update_granules, PrintEvents(), args.temp_dir, args.output_dir)
+    main(args.data_center, args.project, args.update_collections, args.update_granules, PrintEvents(), args.temp_dir, args.output_dir, args.concept_format)
