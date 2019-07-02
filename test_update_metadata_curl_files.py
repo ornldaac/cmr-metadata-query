@@ -78,7 +78,7 @@ class TestEvents(umcf.PrintEvents):
     def set_broken(self, event):
         self._broken[event.__name__] = True
 
-class TestTODO(unittest.TestCase):
+class TestMain(unittest.TestCase):
     def setUp(self):
         self.events = TestEvents(self)
         self.tmp_dir = tempfile.mkdtemp()
