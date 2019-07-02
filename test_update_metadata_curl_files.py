@@ -92,12 +92,12 @@ class TestMain(unittest.TestCase):
             'temp_dir': self.tmp_dir,
             'output_dir': self.bin_dir
         }
-        return super(TestTODO, self).setUp()
+        return super(TestMain, self).setUp()
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
         shutil.rmtree(self.bin_dir)
-        return super(TestTODO, self).tearDown()
+        return super(TestMain, self).tearDown()
 
     def test_broken_collections_download_uncached(self):
         self.events.set_broken(TestEvents.collections_download_starting)
