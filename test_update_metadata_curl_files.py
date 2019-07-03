@@ -76,6 +76,9 @@ class TestEvents(umcf.PrintEvents):
         events = [ event.__name__ for event in events ]
         self._unittest.assertEqual(self._events, events)
 
+    def clearEvents(self):
+        self._events = []
+
     def set_broken(self, event):
         self._broken[event.__name__] = True
 
@@ -281,6 +284,28 @@ class TestMain(unittest.TestCase):
 
         self.assertTrue(os.path.exists(tmp_dir))
         self.assertTrue(os.path.exists(bin_dir))
+
+    def test_valid_concept_formats(self):
+        for concept_format_name, concept_format in umcf.SUPPORTED_CONCEPT_FORMATS.items():
+            self.PARAMS['concept_format'] = concept_format_name
+
+            # Write metadata.curl file using cached inputs
+            self.events.clearEvents()
+            self.test_granules_cached()
+
+            # Read first CURL command from metadata file for cached granule
+            dataset_name = "ABoVE_AirSWOT_Radar_Data"
+            filename = os.path.join(self.bin_dir, dataset_name, "metadata", "metadata.curl")
+            with open(filename, "r") as file:
+                curl_cmd = file.readline()
+
+            self.assertIn("-o {}.{}".format(dataset_name, concept_format.file_ext), curl_cmd)
+            self.assertIn("Accept: {}".format(concept_format.accept_header), curl_cmd)
+
+    def test_invalid_concept_format(self):
+        self.PARAMS['concept_format'] = "INVALID_FORMAT"
+        with self.assertRaises(ValueError):
+            umcf.main(**self.PARAMS)
 
 if __name__ == "__main__":
     unittest.main()
