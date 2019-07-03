@@ -4,6 +4,7 @@ import os
 import os.path
 import shutil
 import stat
+import sys
 import tempfile
 import unittest
 
@@ -75,6 +76,9 @@ class TestEvents(umcf.PrintEvents):
         events = [ event.__name__ for event in events ]
         self._unittest.assertEqual(self._events, events)
 
+    def clearEvents(self):
+        self._events = []
+
     def set_broken(self, event):
         self._broken[event.__name__] = True
 
@@ -92,9 +96,12 @@ class TestMain(unittest.TestCase):
             'temp_dir': self.tmp_dir,
             'output_dir': self.bin_dir
         }
+        self.old_stdout = sys.stdout
+        sys.stdout = None # Hide print() output during unit testing
         return super(TestMain, self).setUp()
 
     def tearDown(self):
+        sys.stdout = self.old_stdout
         shutil.rmtree(self.tmp_dir)
         shutil.rmtree(self.bin_dir)
         return super(TestMain, self).tearDown()
@@ -262,22 +269,43 @@ class TestMain(unittest.TestCase):
         tmp_dir = os.path.join(self.tmp_dir, "tmp_dir")
         bin_dir = os.path.join(self.bin_dir, "bin_dir")
 
-        params = self.PARAMS.copy()
-        params['temp_dir'] = tmp_dir
-        params['output_dir'] = bin_dir
+        self.PARAMS['temp_dir'] = tmp_dir
+        self.PARAMS['output_dir'] = bin_dir
 
         self.assertFalse(os.path.exists(tmp_dir))
         self.assertFalse(os.path.exists(bin_dir))
 
         self.events.set_broken(TestEvents.collections_download_starting)
         with self.assertRaises(TestException):
-            umcf.main(**params)
+            umcf.main(**self.PARAMS)
         self.events.assertEvents(
             TestEvents.collections_download_failed,
         )
 
         self.assertTrue(os.path.exists(tmp_dir))
         self.assertTrue(os.path.exists(bin_dir))
+
+    def test_valid_concept_formats(self):
+        for concept_format_name, concept_format in umcf.SUPPORTED_CONCEPT_FORMATS.items():
+            self.PARAMS['concept_format'] = concept_format_name
+
+            # Write metadata.curl file using cached inputs
+            self.events.clearEvents()
+            self.test_granules_cached()
+
+            # Read first CURL command from metadata file for cached granule
+            dataset_name = "ABoVE_AirSWOT_Radar_Data"
+            filename = os.path.join(self.bin_dir, dataset_name, "metadata", "metadata.curl")
+            with open(filename, "r") as file:
+                curl_cmd = file.readline()
+
+            self.assertIn("-o {}.{}".format(dataset_name, concept_format.file_ext), curl_cmd)
+            self.assertIn("Accept: {}".format(concept_format.accept_header), curl_cmd)
+
+    def test_invalid_concept_format(self):
+        self.PARAMS['concept_format'] = "INVALID_FORMAT"
+        with self.assertRaises(ValueError):
+            umcf.main(**self.PARAMS)
 
 if __name__ == "__main__":
     unittest.main()
