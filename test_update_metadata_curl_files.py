@@ -4,6 +4,7 @@ import os
 import os.path
 import shutil
 import stat
+import sys
 import tempfile
 import unittest
 
@@ -92,9 +93,12 @@ class TestMain(unittest.TestCase):
             'temp_dir': self.tmp_dir,
             'output_dir': self.bin_dir
         }
+        self.old_stdout = sys.stdout
+        sys.stdout = None # Hide print() output during unit testing
         return super(TestMain, self).setUp()
 
     def tearDown(self):
+        sys.stdout = self.old_stdout
         shutil.rmtree(self.tmp_dir)
         shutil.rmtree(self.bin_dir)
         return super(TestMain, self).tearDown()
