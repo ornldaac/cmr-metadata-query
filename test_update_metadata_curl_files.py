@@ -262,16 +262,15 @@ class TestMain(unittest.TestCase):
         tmp_dir = os.path.join(self.tmp_dir, "tmp_dir")
         bin_dir = os.path.join(self.bin_dir, "bin_dir")
 
-        params = self.PARAMS.copy()
-        params['temp_dir'] = tmp_dir
-        params['output_dir'] = bin_dir
+        self.PARAMS['temp_dir'] = tmp_dir
+        self.PARAMS['output_dir'] = bin_dir
 
         self.assertFalse(os.path.exists(tmp_dir))
         self.assertFalse(os.path.exists(bin_dir))
 
         self.events.set_broken(TestEvents.collections_download_starting)
         with self.assertRaises(TestException):
-            umcf.main(**params)
+            umcf.main(**self.PARAMS)
         self.events.assertEvents(
             TestEvents.collections_download_failed,
         )
