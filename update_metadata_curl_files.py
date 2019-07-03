@@ -123,7 +123,7 @@ def download_from_cmr(what, temp_dir, **params):
 
 class Events(object):
     def collections_download_starting(self):
-        pass
+        pass 
     def collections_download_cached(self):
         pass
     def collections_download_succeeded(self, collections):
@@ -278,7 +278,7 @@ def main(data_center, project, update_collections, update_granules, events=Event
         else:
             events.writing_curl_file_succeeded(collection, dataset_name, granules, filename)
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     # Parse command line arguments
     argparser = ArgumentParser(description=__doc__, formatter_class=RawTextHelpFormatter)
     argparser.add_argument(dest="data_center", help="data center to query for or \"all\"")
