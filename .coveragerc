@@ -1,0 +1,7 @@
+[run]
+include = update_metadata_curl_files.py
+
+[report]
+exclude_lines =
+    pass
+    pragma: no cover

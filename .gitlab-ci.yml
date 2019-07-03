@@ -1,0 +1,14 @@
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+  - pip install coverage
+  - python -m coverage run test_update_metadata_curl_files.py
+
+coverage:
+  stage: test
+  script:
+  - python -m coverage html
+  coverage: '/(\d+%)$/'
