@@ -48,15 +48,6 @@ docs/_build/
 tmp/
 out/
 
-# files written by code
-*.log
-*.xml
-*.csv
-*.sql
-*.lst
-*.dat
-*.txt
-
 # OS and IDE generated files
 .DS_Store
 .DS_Store?

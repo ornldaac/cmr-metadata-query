@@ -90,4 +90,4 @@ umcf.main(
 
 ## REQUIREMENTS
 
-`update_metadata_curl_files.py` requires Python 2 or above with no additional third-party packages. It has been tested with Python 2.7, 3.6 and 3.7.
+`update_metadata_curl_files.py` requires Python 2 or above. See [requirements.txt](requirements.txt) for a list of required Python packages. It has been tested with Python 2.7, 3.6 and 3.7.

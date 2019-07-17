@@ -6,6 +6,7 @@ test:
   script:
   - apt-get update -qy
   - apt-get install -y python python-pip
+  - pip install -r requirements.txt
   - pip install coverage
   - python -m coverage run test_update_metadata_curl_files.py
 
@@ -14,6 +15,7 @@ coverage:
   script:
   - apt-get update -qy
   - apt-get install -y python python-pip
+  - pip install -r requirements.txt
   - pip install coverage
   - python -m coverage html
   coverage: '/(\d+%)$/'
