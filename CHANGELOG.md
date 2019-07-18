@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.1] - 2019-07-18
 ### Fixed
  - [Test CURL write error without editing file access permissions](f0c2afa63c122b101088b7be821cb8a5f4697b1b)
 
