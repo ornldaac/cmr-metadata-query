@@ -44,6 +44,16 @@ CACHED_GRANULES_1 = {
         ]
     }
 }
+CACHED_GRANULES_BAD = {
+    "feed": {
+        "entry": [
+            {
+                "id": "G1604360612-ORNL_DAAC",
+                # Missing key: "title"
+            }
+        ]
+    }
+}
 
 class TestException(Exception):
     pass
@@ -219,18 +229,7 @@ class TestMain(unittest.TestCase):
 
         # Create 1 cached granule
         with open(os.path.join(self.tmp_dir, "granules_C1604360562-ORNL_DAAC.json"), 'w') as file:
-            json.dump(CACHED_GRANULES_1, file)
-
-        # Create metadata directory for cached granule
-        dataset_name = "ABoVE_AirSWOT_Radar_Data"
-        metadata_dir = os.path.join(self.bin_dir, dataset_name, "metadata")
-        os.makedirs(metadata_dir)
-
-        # Create write protected metadata file to cause exception
-        filename = os.path.join(metadata_dir, "metadata.curl")
-        with open(filename, "w") as file:
-            pass
-        os.chmod(filename, stat.S_IREAD)
+            json.dump(CACHED_GRANULES_BAD, file)
 
         umcf.main(**self.PARAMS)
         self.events.assertEvents(
@@ -241,9 +240,6 @@ class TestMain(unittest.TestCase):
             TestEvents.writing_curl_file_starting,
             TestEvents.writing_curl_file_failed,
         )
-
-        # Remove write protection on metadata file for cleanup
-        os.chmod(filename, stat.S_IREAD or stat.S_IWRITE)
 
     def test_paging(self):
         # Create 1 cached collection
