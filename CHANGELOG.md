@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+ - [Test CURL write error without editing file access permissions](f0c2afa63c122b101088b7be821cb8a5f4697b1b)
+
 ## [1.1.0] - 2019-07-03
 ### Added
  - [Add concept_format option](51f0116be25b565b1d36c0499e6d59a0f5fc523c)
