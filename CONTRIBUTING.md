@@ -50,7 +50,7 @@ Please make a new GitLab Merge Request with a clear list of what you've done (re
    * **Major non-breaking** changes increment the **minor number**.
    * **Major breaking** changes increment the **mayor number**.
 2. Create a seperate commit named "Bump version". This commit updates the line `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) to reflect the release date and version: `## [VERSION] - YYYY-MM-DD`
-3. Tag the "Bounce version" commit with the new version number using `git tag` followed by `git push --tags`.
+3. Tag the "Bump version" commit with the new version number using `git tag` followed by `git push --tags`.
 
 ## Coding standards
 
