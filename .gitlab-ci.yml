@@ -8,5 +8,5 @@ test:
   - pip install -r requirements.txt
   - pip install coverage
   - python -m coverage run test_update_metadata_curl_files.py
-  - python -m coverage html
+  - python -m coverage report -m
   coverage: '/(\d+%)$/'
